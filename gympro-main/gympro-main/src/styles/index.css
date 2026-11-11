@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --gym-green: #1DB97A;
+    --gym-dark:  #065c3a;
+    --iron-900:  #111110;
+    --iron-800:  #1e1d1a;
+  }
+
+  html { font-family: 'DM Sans', sans-serif; }
+
+  body {
+    @apply bg-iron-50 text-iron-900;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  input, select, textarea {
+    @apply font-sans;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-iron-200 rounded-full; }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-2xl shadow-card border border-iron-100/60;
+  }
+
+  .btn-primary {
+    @apply bg-gym-500 hover:bg-gym-600 text-white font-medium px-4 py-2.5 rounded-xl
+           transition-all duration-150 active:scale-95 flex items-center gap-2 text-sm;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-iron-50 text-iron-700 font-medium px-4 py-2.5 rounded-xl
+           border border-iron-200 transition-all duration-150 active:scale-95
+           flex items-center gap-2 text-sm;
+  }
+
+  .btn-danger {
+    @apply bg-red-500 hover:bg-red-600 text-white font-medium px-4 py-2.5 rounded-xl
+           transition-all duration-150 active:scale-95 flex items-center gap-2 text-sm;
+  }
+
+  .input {
+    @apply w-full px-3 py-2.5 rounded-xl border border-iron-200 bg-white text-iron-900
+           text-sm placeholder-iron-300 focus:outline-none focus:ring-2 focus:ring-gym-400/30
+           focus:border-gym-400 transition-all duration-150;
+  }
+
+  .label {
+    @apply block text-xs font-medium text-iron-500 mb-1.5 uppercase tracking-wide;
+  }
+
+  .badge-block1 { @apply bg-gym-50 text-gym-700 text-xs font-medium px-2 py-0.5 rounded-md; }
+  .badge-block2 { @apply bg-amber-50 text-amber-600 text-xs font-medium px-2 py-0.5 rounded-md; }
+  .badge-block3 { @apply bg-blue-50 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-md; }
+
+  .nav-tab {
+    @apply flex items-center gap-2 px-4 py-3 text-sm font-medium text-iron-400
+           border-b-2 border-transparent hover:text-iron-700 transition-colors;
+  }
+  .nav-tab.active {
+    @apply text-gym-600 border-gym-500;
+  }
+
+  .day-chip {
+    @apply px-4 py-1.5 rounded-full text-sm font-medium border border-iron-200
+           text-iron-500 bg-white hover:border-gym-400 hover:text-gym-600 transition-all cursor-pointer;
+  }
+  .day-chip.active {
+    @apply bg-gym-500 border-gym-500 text-white;
+  }
+
+  .stat-card {
+    @apply card p-4;
+  }
+
+  .stat-value {
+    @apply text-2xl font-semibold text-iron-900;
+  }
+
+  .stat-label {
+    @apply text-xs text-iron-400 uppercase tracking-wide mt-1;
+  }
+}
+
+/* Page fade-in animation */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp .25s ease both; }
+
+/* Stagger children */
+.stagger > * { animation: fadeUp .3s ease both; }
+.stagger > *:nth-child(1) { animation-delay: .04s; }
+.stagger > *:nth-child(2) { animation-delay: .08s; }
+.stagger > *:nth-child(3) { animation-delay: .12s; }
+.stagger > *:nth-child(4) { animation-delay: .16s; }
+.stagger > *:nth-child(5) { animation-delay: .20s; }
+.stagger > *:nth-child(6) { animation-delay: .24s; }
