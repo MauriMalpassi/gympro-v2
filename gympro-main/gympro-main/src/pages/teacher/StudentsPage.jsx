@@ -323,8 +323,8 @@ export default function StudentsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
-                  <label className="label">Nombre completo *</label>
-                  <input className="input" placeholder="Ej: Martín López" value={form.name}
+                  <label className="label">Apellido y nombre *</label>
+                  <input className="input" placeholder="Ej: López Martín" value={form.name}
                     onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required />
                 </div>
                 <div>
