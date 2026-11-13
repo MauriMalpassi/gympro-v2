@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
 import TeacherLayout from './pages/teacher/TeacherLayout'
 import StudentLayout from './pages/student/StudentLayout'
 
@@ -18,11 +19,15 @@ export default function App() {
     )
   }
 
-  if (!user || !profile) return <LoginPage />
-
   return (
     <Routes>
-      {profile.role === 'teacher' ? (
+      {/* Ruta pública de registro con invitación */}
+      <Route path="/registro/:code" element={<RegisterPage />} />
+
+      {/* Rutas autenticadas */}
+      {!user || !profile ? (
+        <Route path="*" element={<LoginPage />} />
+      ) : profile.role === 'teacher' ? (
         <Route path="/*" element={<TeacherLayout />} />
       ) : (
         <Route path="/*" element={<StudentLayout />} />
