@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 
+const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin
+
 const COLORS = ['#E1F5EE','#FAEEDA','#E6F1FB','#FCF0F0']
 const TEXT_COLORS = ['#085041','#633806','#0C447C','#7F1D1D']
 
@@ -18,6 +20,8 @@ const EMPTY_FORM = {
 
 export default function StudentsPage() {
   const [students, setStudents] = useState([])
+  const [inviteLink, setInviteLink] = useState('')
+  const [showInviteModal, setShowInviteModal] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editStudent, setEditStudent] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -35,6 +39,28 @@ export default function StudentsPage() {
       .eq('role', 'student')
       .order('name')
     setStudents(data || [])
+  }
+
+  async function generateInvite() {
+    const { data, error } = await supabase
+      .from('invitations')
+      .insert({ created_by: (await supabase.auth.getUser()).data.user?.id })
+      .select('code')
+      .single()
+    if (error || !data) { alert('Error al generar invitación'); return }
+    const link = `${APP_URL}/registro/${data.code}`
+    setInviteLink(link)
+    setShowInviteModal(true)
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText(inviteLink)
+    showToast('Link copiado')
+  }
+
+  function sendWhatsApp(telefono) {
+    const msg = encodeURIComponent(`Hola! Te comparto tu link para registrarte en JP Fitness:\n${inviteLink}\n\nEl link es válido por 48 horas.`)
+    window.open(`https://wa.me/54${telefono.replace(/\D/g,'')}?text=${msg}`, '_blank')
   }
 
   async function createStudent(e) {
@@ -158,10 +184,16 @@ export default function StudentsPage() {
           <i className="ti ti-users text-primary-400" /> Alumnos
           <span className="text-sm font-normal text-gray-400">({students.length} total)</span>
         </h2>
-        <button onClick={() => { setShowModal(true); setForm(EMPTY_FORM) }}
-          className="btn-primary flex items-center gap-2 text-sm">
-          <i className="ti ti-plus" /> Nuevo alumno
-        </button>
+        <div className="flex gap-2">
+          <button onClick={generateInvite}
+            className="btn-secondary flex items-center gap-2 text-sm">
+            <i className="ti ti-link" /> Invitar
+          </button>
+          <button onClick={() => { setShowModal(true); setForm(EMPTY_FORM) }}
+            className="btn-primary flex items-center gap-2 text-sm">
+            <i className="ti ti-plus" /> Nuevo alumno
+          </button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -246,6 +278,38 @@ export default function StudentsPage() {
           </div>
         ))}
       </div>
+
+      {/* Modal invitación */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-base font-medium text-gray-900 mb-1 flex items-center gap-2">
+              <i className="ti ti-link text-primary-400" /> Link de registro
+            </h3>
+            <p className="text-xs text-gray-400 mb-4">Válido por 48 horas. Solo una persona puede usarlo.</p>
+
+            <div className="bg-gray-50 rounded-xl p-3 mb-4 break-all text-xs text-gray-600 font-mono">
+              {inviteLink}
+            </div>
+
+            <div className="space-y-2">
+              <button onClick={copyLink}
+                className="btn-secondary w-full flex items-center justify-center gap-2 text-sm">
+                <i className="ti ti-copy" /> Copiar link
+              </button>
+              <button onClick={() => sendWhatsApp('')}
+                className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors">
+                <i className="ti ti-brand-whatsapp" /> Abrir WhatsApp
+              </button>
+            </div>
+
+            <button onClick={() => setShowInviteModal(false)}
+              className="mt-3 w-full text-center text-sm text-gray-400 hover:text-gray-600">
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal crear / editar */}
       {(showModal || editStudent) && (
