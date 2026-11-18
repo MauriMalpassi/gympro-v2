@@ -62,6 +62,9 @@ export default function CobranzaPage() {
       // Alumnos que YA tienen cuota en este período
       const yaExisten = new Set(payments.map(p => p.student_id))
 
+      const [pyear, pmonth] = periodo.split('-')
+      const dueDate = `${pyear}-${pmonth}-10`
+
       const nuevas = students
         .filter(s => !yaExisten.has(s.id))
         .map(s => ({
@@ -69,6 +72,7 @@ export default function CobranzaPage() {
           period: periodo,
           amount: s.precio_mensual || 0,
           currency: 'ARS',
+          due_date: dueDate,
           status: 'pending',
           payment_date: null,
           method: null,
@@ -105,11 +109,15 @@ export default function CobranzaPage() {
     e.preventDefault()
     setSavingPay(true)
     const existing = getPayment(modalStudent.id)
+    const [pyear, pmonth] = periodo.split('-')
+    const dueDate = `${pyear}-${pmonth}-10`
+
     const payload = {
       student_id: modalStudent.id,
       amount: parseFloat(payForm.amount),
       currency: 'ARS',
       payment_date: new Date().toISOString().split('T')[0],
+      due_date: dueDate,
       period: periodo,
       method: payForm.method,
       status: 'paid',
