@@ -6,9 +6,14 @@ import { exportRoutinePDF } from '../../lib/export'
 const BLOCK_CLASSES = { 'Bloque 1': 'badge-block1', 'Bloque 2': 'badge-block2', 'Bloque 3': 'badge-block3' }
 const WEEKS = [1, 2, 3, 4]
 
+function getPeriodo(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
 export default function StudentRoutine() {
   const { profile } = useAuth()
   const [days, setDays] = useState([])
+  const [paymentAlert, setPaymentAlert] = useState(false)
   const [activeDay, setActiveDay] = useState(null)
   const [activeWeek, setActiveWeek] = useState(1)
   const [exercises, setExercises] = useState([])
@@ -46,7 +51,21 @@ export default function StudentRoutine() {
 
   useEffect(() => {
     loadDaysAndTeacher()
+    checkPaymentStatus()
   }, [])
+
+  async function checkPaymentStatus() {
+    if (!profile?.id) return
+    const today = new Date()
+    if (today.getDate() <= 10) return // dentro del período, no avisar
+    const { data } = await supabase
+      .from('payments')
+      .select('status')
+      .eq('student_id', profile.id)
+      .eq('period', getPeriodo())
+      .maybeSingle()
+    if (!data || data.status !== 'paid') setPaymentAlert(true)
+  }
 
   useEffect(() => {
     if (activeDay && profile) loadRoutine()
@@ -224,6 +243,16 @@ export default function StudentRoutine() {
       {toast && (
         <div className="fixed top-4 right-4 z-50 bg-primary-400 text-white px-4 py-2 rounded-xl text-sm flex items-center gap-2 shadow-lg">
           <i className="ti ti-check" /> {toast}
+        </div>
+      )}
+
+      {paymentAlert && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+          <i className="ti ti-alert-circle text-red-500 text-xl mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-red-700">Pago vencido</p>
+            <p className="text-xs text-red-500 mt-0.5">Tu cuota de este mes está pendiente. Contactá a tu entrenador para regularizar.</p>
+          </div>
         </div>
       )}
 
