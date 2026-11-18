@@ -100,6 +100,9 @@ async function createStudent(e) {
   e.preventDefault()
   setLoading(true)
   try {
+    // Guardar sesión del profesor antes de crear el alumno
+    const { data: { session: teacherSession } } = await supabase.auth.getSession()
+
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
@@ -124,6 +127,14 @@ async function createStudent(e) {
       role: 'student',
     })
     if (profileError) throw new Error(profileError.message)
+
+    // Restaurar sesión del profesor
+    if (teacherSession) {
+      await supabase.auth.setSession({
+        access_token: teacherSession.access_token,
+        refresh_token: teacherSession.refresh_token,
+      })
+    }
 
     setShowModal(false)
     setForm(EMPTY_FORM)
