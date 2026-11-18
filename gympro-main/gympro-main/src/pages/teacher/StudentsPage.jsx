@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../hooks/useAuth.jsx'
 
 const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin
 
@@ -22,11 +23,14 @@ function getInitials(name = '') {
 
 const EMPTY_FORM = {
   name: '', username: '', email: '', password: '',
-  telefono: '', plan: '', turno: '', fecha_inicio: '', activo: true
+  telefono: '', plan: '', turno: '', fecha_inicio: '', activo: true,
+  precio_mensual: ''
 }
 
 export default function StudentsPage() {
+  const { profile } = useAuth()
   const [students, setStudents] = useState([])
+  const [planPrices, setPlanPrices] = useState({})
   const [inviteLink, setInviteLink] = useState('')
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -38,6 +42,28 @@ export default function StudentsPage() {
   const [filterPlan, setFilterPlan] = useState('')
 
   useEffect(() => { loadStudents() }, [])
+  useEffect(() => { if (profile) loadPlanPrices() }, [profile])
+
+  async function loadPlanPrices() {
+    const { data } = await supabase
+      .from('plan_prices')
+      .select('plan, price')
+      .eq('teacher_id', profile.id)
+    if (data) {
+      const map = {}
+      data.forEach(p => { map[p.plan] = p.price })
+      setPlanPrices(map)
+    }
+  }
+
+  // Al cambiar el plan en el form, si es alumno NUEVO y no tiene precio manual, autoasignar
+  function handlePlanChange(newPlan) {
+    setForm(prev => {
+      // Solo auto-asignar si no hay precio ya cargado manualmente (campo vacío o era auto)
+      const autoPrice = newPlan && planPrices[newPlan] ? planPrices[newPlan] : ''
+      return { ...prev, plan: newPlan, precio_mensual: autoPrice }
+    })
+  }
 
   async function loadStudents() {
     const { data } = await supabase
@@ -85,6 +111,7 @@ export default function StudentsPage() {
           turno: form.turno,
           fecha_inicio: form.fecha_inicio || null,
           activo: form.activo,
+          precio_mensual: form.precio_mensual ? parseFloat(form.precio_mensual) : null,
         }
       })
       if (error || data?.error) throw new Error(error?.message || data?.error)
@@ -360,7 +387,7 @@ export default function StudentsPage() {
                 )}
                 <div>
                   <label className="label">Plan</label>
-                  <select className="input" value={form.plan} onChange={e => setForm(p => ({ ...p, plan: e.target.value }))}>
+                  <select className="input" value={form.plan} onChange={e => handlePlanChange(e.target.value)}>
                     <option value="">Sin definir</option>
                     {PLANES.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
@@ -371,6 +398,20 @@ export default function StudentsPage() {
                     <option value="">Sin definir</option>
                     {TURNOS.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="label">
+                    Precio mensual ($)
+                    {form.plan && planPrices[form.plan] && (
+                      <span className="text-xs text-gray-400 font-normal ml-1">
+                        — precio base del plan: ${new Intl.NumberFormat('es-AR').format(planPrices[form.plan])}
+                      </span>
+                    )}
+                  </label>
+                  <input className="input" type="number" placeholder="0"
+                    value={form.precio_mensual}
+                    onChange={e => setForm(p => ({ ...p, precio_mensual: e.target.value }))} />
+                  <p className="text-xs text-gray-400 mt-1">Si lo dejás vacío, se usará el precio del plan.</p>
                 </div>
                 <div className="col-span-2">
                   <label className="label">Fecha de inicio</label>
