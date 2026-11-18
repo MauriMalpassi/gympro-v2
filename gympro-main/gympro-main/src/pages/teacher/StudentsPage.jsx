@@ -6,7 +6,14 @@ const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin
 const COLORS = ['#E1F5EE','#FAEEDA','#E6F1FB','#FCF0F0']
 const TEXT_COLORS = ['#085041','#633806','#0C447C','#7F1D1D']
 
-const PLANES = ['Musculación', 'Funcional', 'Musculación + Funcional']
+const PLANES = [
+  'Musculación',
+  'Musculación Personal',
+  'Funcional',
+  'Funcional Personal',
+  'Musculación + Funcional',
+  'Musculación + Funcional Personal',
+]
 const TURNOS = ['Mañana', 'Tarde', 'Noche']
 
 function getInitials(name = '') {
