@@ -52,9 +52,13 @@ export default function CobranzaPage() {
     // Si el alumno todavía no arrancó en este período, no debe nada
     const student = students.find(s => s.id === studentId)
     if (student?.fecha_inicio) {
-      const [piYear, piMonth] = student.fecha_inicio.split('-').map(Number)
+      // fecha_inicio puede ser "2026-12-01" → tomamos solo año y mes
+      const parts = student.fecha_inicio.substring(0, 7).split('-').map(Number) // "2026-12"
+      const piYear = parts[0], piMonth = parts[1]
       const [pYear, pMonth] = periodo.split('-').map(Number)
-      if (pYear < piYear || (pYear === piYear && pMonth < piMonth)) return 'inactive'
+      const periodoNum = pYear * 100 + pMonth
+      const inicioNum = piYear * 100 + piMonth
+      if (periodoNum < inicioNum) return 'inactive'
     }
 
     const today = new Date()
