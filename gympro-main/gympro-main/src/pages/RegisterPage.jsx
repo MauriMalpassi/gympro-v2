@@ -2,7 +2,14 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
-const PLANES = ['Musculación', 'Funcional', 'Musculación + Funcional']
+const PLANES = [
+  'Musculación',
+  'Musculación Personal',
+  'Funcional',
+  'Funcional Personal',
+  'Musculación + Funcional',
+  'Musculación + Funcional Personal',
+]
 const TURNOS = ['Mañana', 'Tarde', 'Noche']
 
 export default function RegisterPage() {
