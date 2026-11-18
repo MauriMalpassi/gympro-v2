@@ -100,21 +100,33 @@ export default function StudentsPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      const { data, error } = await supabase.functions.invoke('dynamic-handler', {
-        body: {
-          name: form.name,
-          username: form.username,
-          email: form.email,
-          password: form.password,
-          telefono: form.telefono,
-          plan: form.plan,
-          turno: form.turno,
-          fecha_inicio: form.fecha_inicio || null,
-          activo: form.activo,
-          precio_mensual: form.precio_mensual ? parseFloat(form.precio_mensual) : null,
-        }
+      // Crear usuario en Auth con signUp
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: { data: { username: form.username } }
       })
-      if (error || data?.error) throw new Error(error?.message || data?.error)
+      if (authError) throw new Error(authError.message)
+
+      const userId = authData.user?.id
+      if (!userId) throw new Error('No se pudo crear el usuario')
+
+      // Insertar perfil
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: userId,
+        name: form.name,
+        username: form.username,
+        email: form.email,
+        telefono: form.telefono || null,
+        plan: form.plan || null,
+        turno: form.turno || null,
+        fecha_inicio: form.fecha_inicio || null,
+        activo: form.activo !== false,
+        precio_mensual: form.precio_mensual ? parseFloat(form.precio_mensual) : null,
+        role: 'student',
+      })
+      if (profileError) throw new Error(profileError.message)
+
       setShowModal(false)
       setForm(EMPTY_FORM)
       loadStudents()
