@@ -7,10 +7,12 @@ import TrainingDaysPage from './TrainingDaysPage'
 import ExercisesPage from './ExercisesPage'
 import RutinasPage from './RutinasPage'
 import ConfigPage from './ConfigPage'
+import CobranzaPage from './CobranzaPage'
 
 const TABS = [
   { path: '/', label: 'Tablero', icon: 'ti-layout-dashboard' },
   { path: '/alumnos', label: 'Alumnos', icon: 'ti-users' },
+  { path: '/cobranza', label: 'Cobranza', icon: 'ti-cash' },
   { path: '/dias', label: 'Días', icon: 'ti-calendar' },
   { path: '/ejercicios', label: 'Ejercicios', icon: 'ti-barbell' },
   { path: '/progresion', label: 'Progresión', icon: 'ti-chart-line' },
@@ -50,6 +52,7 @@ export default function TeacherLayout() {
           <Route path="/ejercicios" element={<ExercisesPage />} />
           <Route path="/progresion" element={<ProgressionPage />} />
           <Route path="/rutinas" element={<RutinasPage />} />
+          <Route path="/cobranza" element={<CobranzaPage />} />
           <Route path="/config" element={<ConfigPage />} />
         </Routes>
       </main>
