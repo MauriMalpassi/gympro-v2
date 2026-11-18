@@ -96,48 +96,45 @@ export default function StudentsPage() {
     window.open(`https://wa.me/54${telefono.replace(/\D/g,'')}?text=${msg}`, '_blank')
   }
 
-  async function createStudent(e) {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      // Crear usuario en Auth con signUp
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-        options: { data: { username: form.username } }
-      })
-      if (authError) throw new Error(authError.message)
+async function createStudent(e) {
+  e.preventDefault()
+  setLoading(true)
+  try {
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: { data: { username: form.username } }
+    })
+    if (authError) throw new Error(authError.message)
 
-      const userId = authData.user?.id
-      if (!userId) throw new Error('No se pudo crear el usuario')
+    const userId = authData.user?.id
+    if (!userId) throw new Error('No se pudo crear el usuario')
 
-      // Insertar perfil
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: userId,
-        name: form.name,
-        username: form.username,
-        email: form.email,
-        telefono: form.telefono || null,
-        plan: form.plan || null,
-        turno: form.turno || null,
-        fecha_inicio: form.fecha_inicio || null,
-        activo: form.activo !== false,
-        precio_mensual: form.precio_mensual ? parseFloat(form.precio_mensual) : null,
-        role: 'student',
-      })
-      if (profileError) throw new Error(profileError.message)
+    const { error: profileError } = await supabase.from('profiles').insert({
+      id: userId,
+      name: form.name,
+      username: form.username,
+      email: form.email,
+      telefono: form.telefono || null,
+      plan: form.plan || null,
+      turno: form.turno || null,
+      fecha_inicio: form.fecha_inicio || null,
+      activo: form.activo !== false,
+      precio_mensual: form.precio_mensual ? parseFloat(form.precio_mensual) : null,
+      role: 'student',
+    })
+    if (profileError) throw new Error(profileError.message)
 
-      setShowModal(false)
-      setForm(EMPTY_FORM)
-      loadStudents()
-      showToast('Alumno creado correctamente')
-    } catch (err) {
-      alert('Error al crear alumno: ' + err.message)
-    } finally {
-      setLoading(false)
-    }
+    setShowModal(false)
+    setForm(EMPTY_FORM)
+    loadStudents()
+    showToast('Alumno creado correctamente')
+  } catch (err) {
+    alert('Error al crear alumno: ' + err.message)
+  } finally {
+    setLoading(false)
   }
-
+}
   async function saveEdit(e) {
     e.preventDefault()
     setLoading(true)
