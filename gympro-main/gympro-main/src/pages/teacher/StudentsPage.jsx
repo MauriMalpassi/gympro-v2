@@ -96,56 +96,59 @@ export default function StudentsPage() {
     window.open(`https://wa.me/54${telefono.replace(/\D/g,'')}?text=${msg}`, '_blank')
   }
 
-async function createStudent(e) {
-  e.preventDefault()
-  setLoading(true)
-  try {
-    // Guardar sesión del profesor antes de crear el alumno
-    const { data: { session: teacherSession } } = await supabase.auth.getSession()
+  async function createStudent(e) {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      // Guardar sesión del profesor antes de crear el alumno
+      const { data: { session: teacherSession } } = await supabase.auth.getSession()
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: { data: { username: form.username } }
-    })
-    if (authError) throw new Error(authError.message)
-
-    const userId = authData.user?.id
-    if (!userId) throw new Error('No se pudo crear el usuario')
-
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: userId,
-      name: form.name,
-      username: form.username,
-      email: form.email,
-      telefono: form.telefono || null,
-      plan: form.plan || null,
-      turno: form.turno || null,
-      fecha_inicio: form.fecha_inicio || null,
-      activo: form.activo !== false,
-      precio_mensual: form.precio_mensual ? parseFloat(form.precio_mensual) : null,
-      role: 'student',
-    })
-    if (profileError) throw new Error(profileError.message)
-
-    // Restaurar sesión del profesor
-    if (teacherSession) {
-      await supabase.auth.setSession({
-        access_token: teacherSession.access_token,
-        refresh_token: teacherSession.refresh_token,
+      // Crear usuario en Auth con signUp (esto loguea al nuevo usuario)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: { data: { username: form.username } }
       })
-    }
+      if (authError) throw new Error(authError.message)
 
-    setShowModal(false)
-    setForm(EMPTY_FORM)
-    loadStudents()
-    showToast('Alumno creado correctamente')
-  } catch (err) {
-    alert('Error al crear alumno: ' + err.message)
-  } finally {
-    setLoading(false)
+      const userId = authData.user?.id
+      if (!userId) throw new Error('No se pudo crear el usuario')
+
+      // Insertar perfil
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: userId,
+        name: form.name,
+        username: form.username,
+        email: form.email,
+        telefono: form.telefono || null,
+        plan: form.plan || null,
+        turno: form.turno || null,
+        fecha_inicio: form.fecha_inicio || null,
+        activo: form.activo !== false,
+        precio_mensual: form.precio_mensual ? parseFloat(form.precio_mensual) : null,
+        role: 'student',
+      })
+      if (profileError) throw new Error(profileError.message)
+
+      // Restaurar sesión del profesor
+      if (teacherSession) {
+        await supabase.auth.setSession({
+          access_token: teacherSession.access_token,
+          refresh_token: teacherSession.refresh_token,
+        })
+      }
+
+      setShowModal(false)
+      setForm(EMPTY_FORM)
+      loadStudents()
+      showToast('Alumno creado correctamente')
+    } catch (err) {
+      alert('Error al crear alumno: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
   }
-}
+
   async function saveEdit(e) {
     e.preventDefault()
     setLoading(true)
@@ -373,7 +376,7 @@ async function createStudent(e) {
               <i className={`ti ${editStudent ? 'ti-edit' : 'ti-user-plus'} text-primary-400`} />
               {editStudent ? 'Editar alumno' : 'Nuevo alumno'}
             </h3>
-            <form onSubmit={editStudent ? saveEdit : createStudent} className="space-y-3">
+            <form onSubmit={editStudent ? saveEdit : createStudent} className="space-y-3" autoComplete="off">
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
@@ -401,7 +404,8 @@ async function createStudent(e) {
                     <div className="col-span-2">
                       <label className="label">Contraseña inicial *</label>
                       <input className="input" type="password" placeholder="mínimo 8 caracteres" value={form.password}
-                        onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required minLength={8} />
+                        onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required minLength={8}
+                        autoComplete="new-password" />
                     </div>
                   </>
                 )}
