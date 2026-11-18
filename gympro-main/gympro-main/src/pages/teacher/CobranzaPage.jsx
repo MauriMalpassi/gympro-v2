@@ -55,6 +55,42 @@ export default function CobranzaPage() {
     return 'pending'
   }
 
+  async function generarCuotas() {
+    if (!confirm(`¿Generar cuotas de ${formatPeriodo(periodo)} para todos los alumnos activos?\n\nSolo se crean las que no existen todavía.`)) return
+    setLoading(true)
+    try {
+      // Alumnos que YA tienen cuota en este período
+      const yaExisten = new Set(payments.map(p => p.student_id))
+
+      const nuevas = students
+        .filter(s => !yaExisten.has(s.id))
+        .map(s => ({
+          student_id: s.id,
+          period: periodo,
+          amount: s.precio_mensual || 0,
+          currency: 'ARS',
+          status: 'pending',
+          payment_date: null,
+          method: null,
+          notes: null,
+        }))
+
+      if (nuevas.length === 0) {
+        showToast('Todos los alumnos ya tienen cuota generada')
+        setLoading(false)
+        return
+      }
+
+      await supabase.from('payments').insert(nuevas)
+      showToast(`${nuevas.length} cuota${nuevas.length > 1 ? 's' : ''} generada${nuevas.length > 1 ? 's' : ''}`)
+      loadData()
+    } catch (err) {
+      alert('Error: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function openPayModal(student) {
     const pay = getPayment(student.id)
     setModalStudent(student)
@@ -79,11 +115,19 @@ export default function CobranzaPage() {
       status: 'paid',
       notes: payForm.notes,
     }
+    let result
     if (existing) {
-      await supabase.from('payments').update(payload).eq('id', existing.id)
+      result = await supabase.from('payments').update(payload).eq('id', existing.id)
     } else {
-      await supabase.from('payments').insert(payload)
+      result = await supabase.from('payments').insert(payload)
     }
+
+    if (result.error) {
+      alert('Error Supabase: ' + result.error.message + '\nCódigo: ' + result.error.code)
+      setSavingPay(false)
+      return
+    }
+
     setSavingPay(false)
     setModalStudent(null)
     showToast(`Pago de ${modalStudent.name} registrado`)
@@ -120,14 +164,20 @@ export default function CobranzaPage() {
         <h2 className="text-lg font-medium text-gray-800 flex items-center gap-2">
           <i className="ti ti-cash text-primary-400" /> Cobranza
         </h2>
-        <select className="input text-sm w-auto"
-          value={periodo} onChange={e => setPeriodo(e.target.value)}>
-          {Array.from({ length: 6 }, (_, i) => {
-            const d = new Date(); d.setMonth(d.getMonth() - i)
-            const p = getPeriodo(d)
-            return <option key={p} value={p}>{formatPeriodo(p)}</option>
-          })}
-        </select>
+        <div className="flex items-center gap-2">
+          <select className="input text-sm w-auto"
+            value={periodo} onChange={e => setPeriodo(e.target.value)}>
+            {Array.from({ length: 6 }, (_, i) => {
+              const d = new Date(); d.setMonth(d.getMonth() - i)
+              const p = getPeriodo(d)
+              return <option key={p} value={p}>{formatPeriodo(p)}</option>
+            })}
+          </select>
+          <button onClick={generarCuotas}
+            className="btn-secondary flex items-center gap-1.5 text-sm whitespace-nowrap">
+            <i className="ti ti-bolt text-sm" /> Generar cuotas
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
