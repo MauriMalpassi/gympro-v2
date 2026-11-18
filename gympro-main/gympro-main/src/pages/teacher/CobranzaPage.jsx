@@ -33,7 +33,7 @@ export default function CobranzaPage() {
   async function loadData() {
     setLoading(true)
     const [{ data: studs }, { data: pays }] = await Promise.all([
-      supabase.from('profiles').select('id, name, plan, telefono, precio_mensual, activo').eq('role', 'student').eq('activo', true).order('name'),
+      supabase.from('profiles').select('id, name, plan, telefono, precio_mensual, activo, fecha_inicio').eq('role', 'student').eq('activo', true).order('name'),
       supabase.from('payments').select('*').eq('period', periodo)
     ])
     setStudents(studs || [])
@@ -48,6 +48,15 @@ export default function CobranzaPage() {
   function getStatus(studentId) {
     const pay = getPayment(studentId)
     if (pay?.status === 'paid') return 'paid'
+
+    // Si el alumno todavía no arrancó en este período, no debe nada
+    const student = students.find(s => s.id === studentId)
+    if (student?.fecha_inicio) {
+      const [piYear, piMonth] = student.fecha_inicio.split('-').map(Number)
+      const [pYear, pMonth] = periodo.split('-').map(Number)
+      if (pYear < piYear || (pYear === piYear && pMonth < piMonth)) return 'inactive'
+    }
+
     const today = new Date()
     const [year, month] = periodo.split('-').map(Number)
     if (today.getFullYear() === year && today.getMonth() + 1 === month && today.getDate() > 10) return 'overdue'
@@ -154,7 +163,7 @@ export default function CobranzaPage() {
 
   const filtered = students.filter(s => !filterStatus || getStatus(s.id) === filterStatus)
   const totalCobrado = payments.filter(p => p.status === 'paid' && p.period === periodo).reduce((a, p) => a + (p.amount || 0), 0)
-  const totalPendiente = filtered.filter(s => getStatus(s.id) !== 'paid').reduce((a, s) => a + (s.precio_mensual || 0), 0)
+  const totalPendiente = filtered.filter(s => ['pending','overdue'].includes(getStatus(s.id))).reduce((a, s) => a + (s.precio_mensual || 0), 0)
   const countPaid = students.filter(s => getStatus(s.id) === 'paid').length
   const countPending = students.filter(s => getStatus(s.id) === 'pending').length
   const countOverdue = students.filter(s => getStatus(s.id) === 'overdue').length
@@ -254,6 +263,8 @@ export default function CobranzaPage() {
                       className="p-2 rounded-lg hover:bg-gray-100 text-primary-400 transition-colors" title="Ver pago">
                       <i className="ti ti-check text-base" />
                     </button>
+                  ) : status === 'inactive' ? (
+                    <span className="text-xs text-gray-300 px-3 py-1.5">—</span>
                   ) : (
                     <button onClick={() => openPayModal(s)}
                       className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1">
@@ -332,6 +343,11 @@ function StatusBadge({ status }) {
   if (status === 'overdue') return (
     <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full flex items-center gap-1">
       <i className="ti ti-alert-circle text-xs" /> Vencido
+    </span>
+  )
+  if (status === 'inactive') return (
+    <span className="text-xs bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full flex items-center gap-1">
+      <i className="ti ti-calendar-off text-xs" /> No iniciado
     </span>
   )
   return (
